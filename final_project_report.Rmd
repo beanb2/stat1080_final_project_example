@@ -1,0 +1,89 @@
+---
+title: "House Price Regression Example"
+author: "Brennan Bean"
+date: "2023-06-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This report analyzes home prices for King County, WA between May 2014 and May 2015. The dataset comes from <https://www.kaggle.com/datasets/harlfoxem/housesalesprediction?select=kc_house_data.csv> and last accessed on June 27, 2023. There are 21,613 observations and 21 variables in this dataset. 
+
+Note that the document provides examples of how to answer questions, but does not represent a complete submission of the final report. Students should provide additional details about the data (including observations and variable types) as well additional information regarding the motivation for the questions. The purpose of this example is to illustrate how to include an Rmarkdown file as part of a project submission. 
+
+```{r, warn = FALSE, message = FALSE}
+# Tidyverse gives us access to data manipulation and visualization functions. 
+library(tidyverse)
+
+# Load the dataset. Notice that a relative file path is used since it is 
+# assumed that the working directory is the location of the R project and
+# markdown file. 
+housing <- read.csv("data-raw/kc_house_data.csv")
+```
+
+
+## Question 1: Is the relatonship between house price and square footage different for new homes compared to old homes? 
+
+The following histogram shows the counts of homes based on their age. Note that there are `r sum(housing$yr_renovated > 0)` homes that are removed from the visual as they were recorded as having significant updates since there construction. We see that the distribution of home years is left skewed with most homes being more than 100 years old! 
+
+```{r, message = FALSE, fig.align='center'}
+housing |>
+  filter(yr_renovated == 0) |>
+  ggplot() + 
+  geom_histogram(aes(x = yr_built),
+                 breaks = seq(1900, 2015, 5),
+                 col = "black") +
+  scale_y_continuous(limits = c(0, 2000), breaks = seq(0, 2000, 500)) + 
+  scale_x_continuous(limits = c(1900, 2020), breaks = seq(1900, 2020, 20)) + 
+  theme_bw() + 
+  theme(text = element_text(size = 16))
+```
+
+We also observe that square footage is normally distributed on the log scale (meaning it is right skewed on the raw scale) with most homes being between 1,000 - 3,000 square feet. 
+
+```{r, message = FALSE, fig.align='center'}
+housing |>
+  filter(yr_renovated == 0) |>
+  ggplot() + 
+  geom_histogram(aes(x = sqft_living),
+                 col = "black") +
+  scale_y_continuous(limits = c(0, 2600), breaks = seq(0, 2500, 500)) + 
+  scale_x_log10() + 
+  theme_bw() + 
+  theme(text = element_text(size = 16))
+```
+
+We create a classification variable with three groups, old (1900 - 1969), middle (1970 - 1999) and new (2000 - 2015) homes and plot the relationship between square footage and log sale price for each. 
+
+```{r, message = FALSE, fig.align='center'}
+# Remove renovated homes and separate into three age groups. 
+housing_sub <- housing |>
+  filter(yr_renovated == 0) |>
+  mutate(age_bracket = case_when(yr_built > 1999 ~ "new",
+                                 yr_built > 1960 ~ "middle",
+                                 TRUE ~ "old"))
+
+housing_sub |>
+  ggplot(aes(x = sqft_living, y = price, 
+                 color = age_bracket)) + 
+  geom_point(pch = 1) + 
+  geom_smooth(method = "lm") +
+  scale_x_log10() + 
+  scale_y_log10() + 
+  theme_bw() + 
+  theme(text = element_text(size = 16))
+```
+
+We observe in the above figure that the difference in the slope of the lines is relatively small, with the price of middle-aged homes being slightly more responsive to size than new or old homes. We do not attempt to provide a reason for the difference here. 
+
+## Things to consider
+
+<ul>
+<li> Use of the *styler* and *lintr* R packages are great resources for quickly producing code that adheres to the tidyverse style guides (see <https://style.tidyverse.org/> </li>
+<li> Be sure to write a conclusions section on your actual final report summarizing the results of your analysis. </li>
+<li> Check out <https://rmarkdown.rstudio.com/docs/articles/rmarkdown.html> for help with how to properly format your Rmarkdown document. This includes the Rmarkdown cheat sheet that provides a one page resource for essential R markdown commands. </li>
+</ul>
