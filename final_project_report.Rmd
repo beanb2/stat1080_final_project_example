@@ -64,7 +64,7 @@ We create a classification variable with three groups, old (1900 - 1969), middle
 housing_sub <- housing |>
   filter(yr_renovated == 0) |>
   mutate(age_bracket = case_when(yr_built > 1999 ~ "new",
-                                 yr_built > 1960 ~ "middle",
+                                 yr_built > 1969 ~ "middle",
                                  TRUE ~ "old"))
 
 housing_sub |>
